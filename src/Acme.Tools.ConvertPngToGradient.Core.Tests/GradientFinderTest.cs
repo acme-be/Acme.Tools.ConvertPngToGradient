@@ -20,14 +20,14 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Tests
     public class GradientFinderTest
     {
         /// <summary>
-        /// Simples the horizontal gradient.
+        /// Test a simple gradient.
         /// </summary>
         /// <param name="fileName">Name of the file.</param>
         /// <param name="isHorizontal">if set to <c>true</c> the image is horizontal.</param>
         [Theory]
         [InlineData("vertical-simple.png", false)]
         [InlineData("horizontal-simple.png", true)]
-        public void SimpleHorizontalGradient(string fileName, bool isHorizontal)
+        public void SimpleGradient(string fileName, bool isHorizontal)
         {
             var fullPath = this.GetFullPath(fileName);
             var gradientFinder = new GradientFinder(fullPath) { IsHorizontal = isHorizontal };
@@ -35,6 +35,24 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Tests
             gradientFinder.FindGradient();
 
             Assert.Equal(2, gradientFinder.GradientParts.Count);
+        }
+
+        /// <summary>
+        /// Test a complex gradient.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="isHorizontal">if set to <c>true</c> the image is horizontal.</param>
+        [Theory]
+        [InlineData("vertical-complex.png", false)]
+        [InlineData("horizontal-complex.png", true)]
+        public void ComplexGradient(string fileName, bool isHorizontal)
+        {
+            var fullPath = this.GetFullPath(fileName);
+            var gradientFinder = new GradientFinder(fullPath) { IsHorizontal = isHorizontal };
+
+            gradientFinder.FindGradient();
+
+            Assert.True(gradientFinder.GradientParts.Count > 2);
         }
 
         /// <summary>
