@@ -56,6 +56,32 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Tests
         }
 
         /// <summary>
+        /// When you increase the tolerance, the number of part should decrease
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="isHorizontal">if set to <c>true</c> the image is horizontal.</param>
+        /// <param name="minTolerance">The minimum tolerance.</param>
+        /// <param name="maxTolerance">The maximum tolerance.</param>
+        [Theory]
+        [InlineData("vertical-complex.png", false, 2, 10)]
+        [InlineData("vertical-complex.png", false, 5, 10)]
+        [InlineData("vertical-complex.png", false, 10, 20)]
+        [InlineData("horizontal-complex.png", true, 2, 10)]
+        [InlineData("horizontal-complex.png", true, 5, 10)]
+        [InlineData("horizontal-complex.png", true, 10, 20)]
+        public void ComplexGradientMoreToleranceIsLessPart(string fileName, bool isHorizontal, int minTolerance, int maxTolerance)
+        {
+            var fullPath = this.GetFullPath(fileName);
+            var minToleranceGradientFinder = new GradientFinder(fullPath) { IsHorizontal = isHorizontal, Tolerance = minTolerance };
+            var maxToleranceGradientFinder = new GradientFinder(fullPath) { IsHorizontal = isHorizontal, Tolerance = maxTolerance };
+
+            minToleranceGradientFinder.FindGradient();
+            maxToleranceGradientFinder.FindGradient();
+
+            Assert.True(minToleranceGradientFinder.GradientParts.Count > maxToleranceGradientFinder.GradientParts.Count);
+        }
+
+        /// <summary>
         /// Gets the full path.
         /// </summary>
         /// <param name="fileName">Name of the file.</param>

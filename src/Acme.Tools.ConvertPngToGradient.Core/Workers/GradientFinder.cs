@@ -9,7 +9,6 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Xml.Linq;
 
     using ImageMagick;
 
@@ -36,14 +35,6 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
         public string FileName { get; }
 
         /// <summary>
-        /// Gets or sets the tolerance of the tool
-        /// </summary>
-        /// <value>
-        /// The tolerance.
-        /// </value>
-        public int Tolerance { get; set; } = 2;
-
-        /// <summary>
         /// Gets or sets the gradient parts.
         /// </summary>
         /// <value>
@@ -60,6 +51,14 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
         public bool IsHorizontal { get; set; }
 
         /// <summary>
+        /// Gets or sets the tolerance of the tool
+        /// </summary>
+        /// <value>
+        /// The tolerance.
+        /// </value>
+        public int Tolerance { get; set; } = 5;
+
+        /// <summary>
         /// Finds the gradient.
         /// </summary>
         public void FindGradient()
@@ -73,30 +72,30 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
                 {
                     this.RotateImage(image);
                 }
-                
+
                 var pixels = image.GetPixels();
 
                 var start = pixels.GetPixel(0, 0).ToColor();
                 this.AddGradientPart(start, 0);
 
                 var end = pixels.GetPixel(0, image.Height - 1).ToColor();
+                this.AddGradientPart(end, 100);
+
                 var midPoint = pixels.GetPixel(0, image.Height / 2).ToColor();
 
                 // We are lucky, this is a simple gradiant !
                 if (this.IsGradient(start, end, midPoint))
                 {
-                    this.AddGradientPart(end, 100);
                     this.EnsurePartsOrder();
+                    return;
                 }
-            }
-        }
 
-        /// <summary>
-        /// Ensures the parts order.
-        /// </summary>
-        private void EnsurePartsOrder()
-        {
-            this.GradientParts = this.GradientParts?.OrderBy(x => x.Position).ToList();
+                // We must now try to get some blocks
+                this.FindMoreSteps(pixels, image.Height);
+                this.EnsurePartsOrder();
+
+                this.DumpToConsole();
+            }
         }
 
         /// <summary>
@@ -120,6 +119,60 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
         }
 
         /// <summary>
+        /// Dumps to console.
+        /// </summary>
+        private void DumpToConsole()
+        {
+            foreach (var part in this.GradientParts)
+            {
+                var magickColor = MagickColor.FromRgba((byte)part.Red, (byte)part.Green, (byte)part.Blue, (byte)part.Alpha);
+                Console.WriteLine($"{part.Position:F2}% - {magickColor}");
+            }
+        }
+
+        /// <summary>
+        /// Ensures the parts order.
+        /// </summary>
+        private void EnsurePartsOrder()
+        {
+            this.GradientParts = this.GradientParts?.OrderBy(x => x.Position).ToList();
+        }
+
+        /// <summary>
+        /// Finds the more steps to the gradient.
+        /// </summary>
+        /// <param name="pixels">The pixels.</param>
+        /// <param name="height">The height.</param>
+        private void FindMoreSteps(IPixelCollection pixels, int height)
+        {
+            var currentStartPosition = 0;
+            var currentEndPosition = currentStartPosition + 3;
+
+            while (currentEndPosition < height)
+            {
+                var currentMidPointPosition = currentStartPosition + ((currentEndPosition - currentStartPosition) / 2);
+
+                var start = pixels.GetPixel(0, currentStartPosition).ToColor();
+                var end = pixels.GetPixel(0, currentEndPosition).ToColor();
+                var midPoint = pixels.GetPixel(0, currentMidPointPosition).ToColor();
+
+                if (this.IsGradient(start, end, midPoint))
+                {
+                    // We found a point ! Save it and find next
+                    // try to expand the slice
+                    currentEndPosition += 1;
+                }
+                else
+                {
+                    // We find the largest part, try the next part
+                    this.AddGradientPart(end, (currentEndPosition / (decimal)height) * 100);
+                    currentStartPosition = currentEndPosition;
+                    currentEndPosition = currentStartPosition + 3;
+                }
+            }
+        }
+
+        /// <summary>
         /// Determines whether the specified color is gradient.
         /// For a specific range, if the average of the two values are equal to the value of the mid point, then it's a gradient
         /// </summary>
@@ -127,7 +180,7 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
         /// <param name="end">The end.</param>
         /// <param name="midPoint">The mid point.</param>
         /// <returns>
-        ///   <c>true</c> if the specified color is gradient; otherwise, <c>false</c>.
+        /// <c>true</c> if the specified color is gradient; otherwise, <c>false</c>.
         /// </returns>
         private bool IsGradient(MagickColor start, MagickColor end, MagickColor midPoint)
         {
