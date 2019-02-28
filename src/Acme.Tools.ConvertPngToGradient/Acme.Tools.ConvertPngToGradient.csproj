@@ -3,6 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Description>This command line can find the gradient from an image, it outputs the gradient value that can be used in css.</Description>
+    <Company>Acme</Company>
+    <Authors>Simon Baudart</Authors>
+    <Copyright>Simon Baudart 2019</Copyright>
+    <PackageLicenseUrl>https://github.com/simonbaudart/Acme.Tools.ConvertPngToGradient/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/simonbaudart/Acme.Tools.ConvertPngToGradient</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
