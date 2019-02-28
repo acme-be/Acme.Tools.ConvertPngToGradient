@@ -93,8 +93,6 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
                 // We must now try to get some blocks
                 this.FindMoreSteps(pixels, image.Height);
                 this.EnsurePartsOrder();
-
-                this.DumpToConsole();
             }
         }
 
@@ -116,18 +114,6 @@ namespace Acme.Tools.ConvertPngToGradient.Core.Workers
 
             this.GradientParts.Add(gradientPart);
             this.GradientParts = this.GradientParts.OrderBy(x => x.Position).ToList();
-        }
-
-        /// <summary>
-        /// Dumps to console.
-        /// </summary>
-        private void DumpToConsole()
-        {
-            foreach (var part in this.GradientParts)
-            {
-                var magickColor = MagickColor.FromRgba((byte)part.Red, (byte)part.Green, (byte)part.Blue, (byte)part.Alpha);
-                Console.WriteLine($"{part.Position:F2}% - {magickColor}");
-            }
         }
 
         /// <summary>
